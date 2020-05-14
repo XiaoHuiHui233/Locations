@@ -5,8 +5,8 @@ from os import path
 import traceback
 import codecs
 import json
-from imp import load_source
-PlayerInfoAPI = load_source('PlayerInfoAPI','./plugins/PlayerInfoAPI.py')
+# from imp import load_source
+# PlayerInfoAPI = load_source('PlayerInfoAPI','./plugins/PlayerInfoAPI.py')
 
 '''
 MC一般指令染色规则
@@ -48,7 +48,7 @@ def jsonFormatPosition(loc):
     }
 
 def tellComplexed(server, selector, content):
-    server.execute('tellraw ' + selector + ' ' + json.dumps(content, ensure_ascii=False, encoding='utf-8').encode('utf-8'))
+    server.execute('tellraw ' + selector + ' ' + json.dumps(content, ensure_ascii=False))
 
 def posConvert(loc, dim):
     if dim == loc['dim'] or loc['dim'] == 1:
@@ -69,18 +69,18 @@ def highlight(string, kwrd):
 
 def update():
     with codecs.open('locations.json', 'w', encoding='utf-8') as jfile:
-        json.dump(locations, jfile, ensure_ascii=False, encoding='utf-8', sort_keys=True, indent=2, separators=(',', ': '))
+        json.dump(locations, jfile, ensure_ascii=False, sort_keys=True, indent=2, separators=(',', ': '))
 
 def printHelp(server, info):
     for line in helpmsg.splitlines():
         server.tell(info.player, line)
 
 def add(server, info):
-    args = unicode(info.content, encoding='utf-8').split(' ')
+    args = info.content.split(' ')
     for loc in locations:
         if args[2] == loc['name']:
             server.tell(info.player, '§c已存在同名的路标§r')
-            server.tell(info.player, locToStr(loc).encode('utf-8'))
+            server.tell(info.player, locToStr(loc))
             return
     newLoc = {
     'name': args[2],
@@ -99,11 +99,11 @@ def add(server, info):
         ])
     
 def addHere(server, info):
-    args = unicode(info.content, encoding='utf-8').split(' ')
+    args = info.content.split(' ')
     for loc in locations:
         if args[2] == loc['name']:
             server.tell(info.player, '§c已存在同名的路标§r')
-            server.tell(info.player, locToStr(loc).encode('utf-8'))
+            server.tell(info.player, locToStr(loc))
             return
     player_info = PlayerInfoAPI.getPlayerInfo(server, info.player)
     newLoc = {
@@ -123,7 +123,7 @@ def addHere(server, info):
         ])
 
 def delete(server, info):
-    args = unicode(info.content, encoding='utf-8').split(' ')
+    args = info.content.split(' ')
     for loc in locations:
         if args[2] == loc['name']:
             locations.remove(loc)
@@ -136,7 +136,7 @@ def delete(server, info):
     server.tell(info.player, '§c找不到名称匹配的路标，请使用§r !!loc §c查看所有路标！§r')
 
 def get(server, info):
-    args = unicode(info.content, encoding='utf-8').split(' ')
+    args = info.content.split(' ')
     kwrd = args[1]
     count = 0
     for loc in locations:
@@ -188,3 +188,14 @@ def onServerInfo(server, info):
         lines = traceback.format_exc().splitlines()
         for l in lines:
           server.say(l)
+
+import copy
+
+def on_load(server, old):
+  global PlayerInfoAPI
+  PlayerInfoAPI = server.get_plugin_instance('PlayerInfoAPI')
+
+def on_info(server, info):
+  info2 = copy.deepcopy(info)
+  info2.isPlayer = info2.is_player
+  onServerInfo(server, info2)
